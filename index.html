@@ -1,152 +1,323 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Resumen — Datos (presentación)</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Timeline visual — Datos (presentación)</title>
 
-  <!-- Google font (opcional) -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
-  <style>
-    :root{
-      --bg:#0f1724;
-      --card:#0b1220;
-      --muted:#94a3b8;
-      --accent:#2dd4bf; /* teal-ish */
-      --table-bg: #0b1220;
-    }
-    html,body{height:100%;margin:0;font-family:Inter,system-ui,Arial,sans-serif;background:linear-gradient(180deg,#071025 0%,#071826 100%);color:#e6eef8}
-    .wrap{max-width:1200px;margin:32px auto;padding:20px;}
-    header{display:flex;align-items:center;gap:16px;margin-bottom:18px}
-    header h1{margin:0;font-size:1.5rem;font-weight:600}
-    header p{margin:0;color:var(--muted)}
-    .controls{margin:12px 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-    .search{
-      background:transparent;border:1px solid rgba(255,255,255,0.08);padding:8px 12px;border-radius:8px;color:inherit;
-      min-width:220px;outline:none;
-    }
-    .table-wrap{
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-      border-radius:12px;padding:12px;overflow:auto;box-shadow:0 6px 20px rgba(2,6,23,0.6);
-    }
-    table{
-      width:100%;border-collapse:separate;border-spacing:0;
-      font-size:0.95rem;
-    }
-    thead th{
-      position:sticky;top:0;background:linear-gradient(180deg,#08323a,#0b3f3f);
-      color:white;padding:10px 12px;text-align:left;font-weight:600;
-      font-size:0.95rem;border-bottom:1px solid rgba(255,255,255,0.06);
-    }
-    tbody tr{transition:background .12s ease}
-    tbody tr:hover{background:rgba(255,255,255,0.02)}
-    td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.03);color:#dfe9f2}
-    .small{font-size:0.85rem;color:var(--muted)}
-    .badge{display:inline-block;background:rgba(255,255,255,0.03);padding:4px 8px;border-radius:999px;font-weight:600;color:var(--accent)}
-    /* responsive: collapse to cards on very small screens */
-    @media (max-width:720px){
-      table{display:block}
-      thead{display:none}
-      tbody tr{display:block;margin-bottom:12px;background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);border-radius:10px;padding:10px}
-      tbody td{display:flex;justify-content:space-between;padding:8px 10px;border-bottom:1px dashed rgba(255,255,255,0.03)}
-      tbody td::before{content:attr(data-label);color:var(--muted);margin-right:8px;flex:0 0 40%}
-      tbody td span{flex:1;text-align:right}
-    }
-
-    /* small helper for sortable header */
-    .sortable{cursor:pointer;user-select:none}
-    .sort-ind{font-size:0.8rem;opacity:0.7;margin-left:6px}
-  </style>
+<style>
+  :root{
+    --bg:#071428; --card:#0b2233; --muted:#9fb0c3; --accent:#60e0c8; --glass:rgba(255,255,255,0.04);
+  }
+  html,body{height:100%;margin:0;font-family:Inter,system-ui,Arial; background:linear-gradient(180deg,#031027 0%,#071428 100%); color:#eaf6f2;}
+  .wrap{max-width:1200px;margin:28px auto;padding:20px;}
+  header{display:flex;align-items:center;gap:16px;margin-bottom:16px}
+  h1{margin:0;font-size:1.6rem}
+  p.lead{margin:0;color:var(--muted)}
+  .controls{display:flex;gap:10px;margin:14px 0;align-items:center}
+  input.search{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:10px 12px;border-radius:10px;color:inherit;min-width:240px}
+  .layout{display:grid;grid-template-columns:1fr 360px;gap:18px}
+  /* timeline / cards panel */
+  .stage{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:14px;border-radius:12px;box-shadow:0 8px 30px rgba(2,6,23,0.6);overflow:hidden}
+  .cards{display:flex;gap:12px;overflow:hidden;align-items:center}
+  .card{
+    min-width:420px;background:linear-gradient(180deg,var(--card),#071a28);border-radius:12px;padding:16px;box-shadow:0 6px 18px rgba(2,8,20,0.6);
+    transform-origin:center center; transition:transform .28s ease, opacity .28s linear;
+  }
+  .card.dim{opacity:.18; transform:scale(.95)}
+  .card h2{margin:0;font-size:1.05rem}
+  .meta{display:flex;gap:8px;align-items:center;margin:8px 0;color:var(--muted);font-size:.92rem}
+  .mini{
+    display:flex;gap:8px;align-items:center;margin-top:10px;
+  }
+  .bar{
+    width:100%;height:12px;background:rgba(255,255,255,0.04);border-radius:8px;overflow:hidden
+  }
+  .bar > i{display:block;height:100%;border-radius:8px}
+  .bar-label{font-size:.82rem;color:var(--muted);margin-bottom:6px}
+  .caption{margin-top:8px;color:var(--muted);font-size:.9rem}
+  .rightcol{position:relative}
+  .controls-compact{display:flex;gap:8px;align-items:center;justify-content:flex-end}
+  button.btn{background:linear-gradient(90deg,#0ea5a5,#06b6d4);border:none;padding:8px 10px;border-radius:10px;color:#002;cursor:pointer;font-weight:700}
+  .nav{display:flex;gap:8px;margin-top:10px;align-items:center}
+  .ttl{font-weight:700;color:var(--accent)}
+  .legend{display:flex;gap:8px;align-items:center;font-size:.85rem;color:var(--muted)}
+  .legend b{display:inline-block;width:12px;height:12px;border-radius:4px}
+  .badge{display:inline-block;padding:6px 8px;border-radius:999px;background:var(--glass);color:var(--muted);font-weight:600}
+  /* slider */
+  input[type=range]{width:100%;accent-color:var(--accent)}
+  /* responsive */
+  @media (max-width:980px){
+    .layout{grid-template-columns:1fr; padding-bottom:18px}
+    .card{min-width:320px}
+    .rightcol{order:-1}
+  }
+</style>
 </head>
 <body>
   <div class="wrap">
     <header>
       <div>
-        <h1>Histórico — Notas y observaciones</h1>
-        <p class="small">Tabla <span class="badge">Exportada desde Google Sheets</span> — versión maquetada para presentación</p>
+        <h1>Timeline visual — industria y juegos</h1>
+        <p class="lead">Presentación dinámica extraída de tu Google Sheets exportada. (La tabla original se procesa automáticamente.)</p>
       </div>
     </header>
 
     <div class="controls">
-      <input id="q" class="search" placeholder="Buscar (año, juego, observaciones...)" />
-      <div class="small" style="margin-left:auto">Consejo: toca el encabezado para ordenar</div>
+      <input id="search" class="search" placeholder="Buscar (año, juego, observaciones...)" />
+      <div style="margin-left:auto" class="legend">
+        <span class="badge">Export: Google Sheets</span>
+        <span style="display:inline-block;width:10px"></span>
+        <span><b style="background:#1fbfa0"></b> AAA</span>
+        <span><b style="background:#60c6e8"></b> AA</span>
+        <span><b style="background:#e7d36b"></b> Indie</span>
+      </div>
     </div>
 
-    <div class="table-wrap" id="table-wrap">
-      <!-- Aquí pega la tabla convertida -->
-      <!-- Para facilitarte, a continuación incluyo el markup base de la tabla.
-           Reemplaza el <tbody> por el generado desde tu HTML exportado (solo las <tr>/<td>).
-      -->
-      <table id="data-table" aria-describedby="tabla-datos">
-        <thead>
-          <tr>
-            <th class="sortable" data-col="0">Año <span class="sort-ind" id="ind-0">↕</span></th>
-            <th class="sortable" data-col="1">Notas medias AAA <span class="sort-ind" id="ind-1">↕</span></th>
-            <th class="sortable" data-col="2">Notas medias AA <span class="sort-ind" id="ind-2">↕</span></th>
-            <th class="sortable" data-col="3">Notas medias Indies <span class="sort-ind" id="ind-3">↕</span></th>
-            <th>Problemas en la industria</th>
-            <th>AAA (ejemplo juego)</th>
-            <th>AA</th>
-            <th>Indie</th>
-            <th>Observaciones</th>
-          </tr>
-        </thead>
-        <tbody id="tbody">
-          <!-- EJEMPLO: pega aquí las filas (tr) de tu tabla original, o usa la versión limpia que te doy abajo -->
-          <tr>
-            <td data-label="Año">2000</td>
-            <td data-label="Notas AAA">88</td>
-            <td data-label="Notas AA">35</td>
-            <td data-label="Notas Indie">15</td>
-            <td data-label="Problemas">Modelo retail, primeros DRM</td>
-            <td data-label="AAA">The Sims</td>
-            <td data-label="AA">Tony Hawk's Pro Skater 2</td>
-            <td data-label="Indie">—</td>
-            <td data-label="Observaciones">Inicio década con modelo retail; indies inexistentes.</td>
-          </tr>
-          <!-- FIN ejemplo -->
-        </tbody>
-      </table>
+    <div class="layout">
+      <!-- LEFT: stage -->
+      <div class="stage">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div><strong class="ttl" id="current-year">—</strong><div id="current-game" style="color:var(--muted)"></div></div>
+          <div class="nav">
+            <button id="prev" class="btn">◀</button>
+            <button id="next" class="btn">▶</button>
+          </div>
+        </div>
+
+        <div style="height:18px"></div>
+
+        <div class="cards" id="cards"></div>
+
+        <div style="margin-top:12px">
+          <input id="pos" type="range" min="0" max="0" value="0" />
+        </div>
+      </div>
+
+      <!-- RIGHT: details / filters -->
+      <aside class="rightcol">
+        <div class="stage" style="display:flex;flex-direction:column;gap:12px;">
+          <div>
+            <h3 style="margin:0">Detalles</h3>
+            <p style="margin:.4rem 0;color:var(--muted);font-size:.95rem">Filtra por una palabra o navega con las flechas.</p>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div><label class="small">Año seleccionado</label><div id="det-year" class="badge">—</div></div>
+            <div><label class="small">AAA / AA / Indie</label>
+              <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
+                <div class="bar-label">AAA <span id="val-aaa" style="float:right"></span></div>
+                <div class="bar"><i id="bar-aaa" style="width:0%;background:#1fbfa0"></i></div>
+
+                <div class="bar-label">AA <span id="val-aa" style="float:right"></span></div>
+                <div class="bar"><i id="bar-aa" style="width:0%;background:#60c6e8"></i></div>
+
+                <div class="bar-label">Indie <span id="val-indie" style="float:right"></span></div>
+                <div class="bar"><i id="bar-indie" style="width:0%;background:#e7d36b"></i></div>
+              </div>
+            </div>
+
+            <div>
+              <h4 style="margin:0">Observaciones</h4>
+              <p id="det-obs" style="color:var(--muted);margin-top:6px"></p>
+            </div>
+
+            <div style="display:flex;gap:8px;justify-content:flex-end">
+              <button id="download-json" class="btn" title="Descargar datos como JSON">JSON</button>
+            </div>
+          </div>
+        </div>
+      </aside>
     </div>
+
+    <!-- -----------------------------
+         Aquí pega TU tabla exportada (la tabla 'waffle' de Google Sheets).
+         El script la leerá y generará las tarjetas automáticamente.
+         ------------------------------ -->
+    <div id="source" style="display:none">
+      <!-- Pega aquí tu tabla exportada (waffle). Ej: <table class="waffle"> ... </table> -->
+      <!-- Si prefieres, sube la exportación tal cual y copia/pega la <table class="waffle"> completa -->
+    </div>
+
+    <div style="height:20px"></div>
+    <footer style="color:var(--muted);font-size:.85rem">Generado automáticamente desde la tabla exportada. Fuente: tu exportación de Google Sheets. :contentReference[oaicite:1]{index=1}</footer>
   </div>
 
-  <script>
-    // -- BÚSQUEDA SIMPLE (filtra por texto)
-    const q = document.getElementById('q');
-    const tbody = document.getElementById('tbody');
-    q.addEventListener('input', () => {
-      const val = q.value.trim().toLowerCase();
-      Array.from(tbody.rows).forEach(row=>{
-        const txt = row.innerText.toLowerCase();
-        row.style.display = txt.includes(val) ? '' : 'none';
-      });
-    });
+<script>
+/*
+ Script robusto que:
+ - Busca una tabla.waffle dentro del div#source (o en el documento)
+ - Extrae todas las filas (ignorando encabezados y celdas vacías)
+ - Construye tarjetas y sincroniza slider / navegación / búsqueda
+*/
+(function(){
+  // 1) encuentra la tabla (intenta en #source primero, luego en el doc)
+  const source = document.getElementById('source');
+  let table = source.querySelector('table.waffle');
+  if(!table) table = document.querySelector('table.waffle');
 
-    // -- ORDENADO SIMPLE por columna (numérico si todos son números)
-    document.querySelectorAll('th.sortable').forEach(th=>{
-      th.addEventListener('click', ()=> {
-        const col = parseInt(th.dataset.col,10);
-        const rows = Array.from(tbody.rows).filter(r=>r.style.display!=='none');
-        const isNum = rows.every(r=>!isNaN(parseFloat(r.cells[col].innerText.replace(',','.'))));
-        const dir = th._dir = (th._dir === 1) ? -1 : 1;
-        rows.sort((a,b)=>{
-          let A = a.cells[col].innerText.trim();
-          let B = b.cells[col].innerText.trim();
-          if (isNum){ A = parseFloat(A.replace(',','.'))||0; B = parseFloat(B.replace(',','.'))||0; return (A-B)*dir; }
-          A = A.toLowerCase(); B = B.toLowerCase();
-          return A > B ? dir : (A < B ? -dir : 0);
-        });
-        // re-attach
-        rows.forEach(r=>tbody.appendChild(r));
-        // update indicator
-        document.querySelectorAll('.sort-ind').forEach(i=>i.textContent='↕');
-        document.getElementById('ind-'+col).textContent = dir===1 ? '▲' : '▼';
-      });
-    });
+  if(!table){
+    // No hay tabla: muestra mensaje claro para el usuario
+    document.getElementById('cards').innerHTML = '<div style="padding:18px;color:var(--muted)">No se encuentra la tabla exportada. Pega la <code>&lt;table class=\"waffle\"&gt;...&lt;/table&gt;</code> dentro del div <code>#source</code>.</div>';
+    return;
+  }
 
-    // OPTIONAL: if you want to auto-extract the google-exported table and normalize it,
-    // you can add a small script to find table.waffle and replace the tbody content.
-  </script>
+  // 2) parsear filas útiles
+  const rows = Array.from(table.querySelectorAll('tbody tr'))
+                 .filter(tr => {
+                   // ignorar filas que sean meros separadores (freezebar or empty)
+                   const texts = Array.from(tr.cells).map(c=>c.innerText.trim()).join('');
+                   return texts.length>0 && !/freezebar/i.test(tr.className);
+                 });
+
+  // Helper: recuperar texto limpio de una celda (por index)
+  function textAt(tr, idx){ const cell = tr.cells[idx]; return cell ? cell.innerText.trim() : ''; }
+
+  // Column mapping - basado en tu export: A=Year, B=Notas AAA, C=Notas AA, D=Notas Indies, E=Problemas, F=AAA(title), G=AA(title), H=Indie(title), I=Observaciones
+  // Si tu hoja tiene columnas en otro orden, ajusta estos índices.
+  const COL = { year:0, aaaScore:1, aaScore:2, indieScore:3, problems:4, aaaTitle:5, aaTitle:6, indieTitle:7, observations:8 };
+
+  const data = rows.map(tr=>{
+    return {
+      year: textAt(tr, COL.year),
+      aaaScore: parseFloat(textAt(tr, COL.aaaScore).replace(',', '.')) || 0,
+      aaScore: parseFloat(textAt(tr, COL.aaScore).replace(',', '.')) || 0,
+      indieScore: parseFloat(textAt(tr, COL.indieScore).replace(',', '.')) || 0,
+      problems: textAt(tr, COL.problems),
+      aaaTitle: textAt(tr, COL.aaaTitle),
+      aaTitle: textAt(tr, COL.aaTitle),
+      indieTitle: textAt(tr, COL.indieTitle),
+      observations: textAt(tr, COL.observations)
+    };
+  }).filter(d => d.year); // quitar filas sin año
+
+  // sort by year (numérico cuando posible)
+  data.sort((a,b)=> {
+    const na=parseFloat(a.year), nb=parseFloat(b.year);
+    if(!isNaN(na) && !isNaN(nb)) return na-nb;
+    return (a.year> b.year)?1:-1;
+  });
+
+  // UI refs
+  const cardsEl = document.getElementById('cards');
+  const pos = document.getElementById('pos');
+  const prev = document.getElementById('prev'), next = document.getElementById('next');
+  const search = document.getElementById('search');
+  const curYear = document.getElementById('current-year');
+  const curGame = document.getElementById('current-game');
+  const detYear = document.getElementById('det-year'), detObs = document.getElementById('det-obs');
+  const valAAA = document.getElementById('val-aaa'), valAA = document.getElementById('val-aa'), valInd = document.getElementById('val-indie');
+  const barAAA = document.getElementById('bar-aaa'), barAA = document.getElementById('bar-aa'), barInd = document.getElementById('bar-indie');
+  const downloadBtn = document.getElementById('download-json');
+
+  // Create a card element for an entry
+  function makeCard(d){
+    const wrap = document.createElement('article');
+    wrap.className='card';
+    wrap.innerHTML = `
+      <h2>${d.year} — ${d.aaaTitle || d.aaTitle || d.indieTitle || ''}</h2>
+      <div class="meta">${d.problems ? '<span title="Problemas en la industria">⚠️ '+(d.problems.length>60?d.problems.slice(0,60)+'…':d.problems)+'</span>' : ''} <span style="margin-left:8px;color:var(--muted)">${d.aaaTitle?('AAA: '+d.aaaTitle):''}</span></div>
+      <div class="mini">
+        <div style="flex:1">
+          <div class="bar-label">AAA <span style="float:right">${d.aaaScore}</span></div>
+          <div class="bar"><i style="width:${Math.min(100,d.aaaScore)}%;background:#1fbfa0"></i></div>
+          <div class="bar-label">AA <span style="float:right">${d.aaScore}</span></div>
+          <div class="bar"><i style="width:${Math.min(100,d.aaScore)}%;background:#60c6e8"></i></div>
+          <div class="bar-label">Indie <span style="float:right">${d.indieScore}</span></div>
+          <div class="bar"><i style="width:${Math.min(100,d.indieScore)}%;background:#e7d36b"></i></div>
+        </div>
+      </div>
+      <div class="caption">${d.observations ? d.observations : '<span style="color:var(--muted)">Sin observaciones</span>'}</div>
+    `;
+    return wrap;
+  }
+
+  // render all cards (but only show subset via CSS transform)
+  function renderCards(list){
+    cardsEl.innerHTML='';
+    list.forEach((d, idx)=>{
+      const c = makeCard(d);
+      c.dataset.index = idx;
+      cardsEl.appendChild(c);
+    });
+    pos.max = Math.max(0, list.length-1);
+  }
+
+  // initial render
+  let filtered = data.slice();
+  renderCards(filtered);
+
+  // helper: update details panel based on active index
+  function updateActive(i){
+    const cards = Array.from(cardsEl.children);
+    if(cards.length===0) return;
+    if(i<0) i=0; if(i>cards.length-1) i=cards.length-1;
+    pos.value = i;
+    // dim others
+    cards.forEach((c, idx)=> c.classList.toggle('dim', Math.abs(idx - i) > 0));
+    const d = filtered[i];
+    curYear.textContent = d.year;
+    curGame.textContent = (d.aaaTitle || d.aaTitle || d.indieTitle) || '';
+    detYear.textContent = d.year;
+    detObs.textContent = d.observations || '—';
+    valAAA.textContent = d.aaaScore;
+    valAA.textContent = d.aaScore;
+    valInd.textContent = d.indieScore;
+    barAAA.style.width = Math.min(100,d.aaaScore)+'%';
+    barAA.style.width = Math.min(100,d.aaScore)+'%';
+    barInd.style.width = Math.min(100,d.indieScore)+'%';
+
+    // smooth scroll card into view
+    const card = cards[i];
+    if(card) card.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
+  }
+
+  // navigation helpers
+  prev.addEventListener('click', ()=> updateActive(Math.max(0, parseInt(pos.value)-1)));
+  next.addEventListener('click', ()=> updateActive(Math.min(filtered.length-1, parseInt(pos.value)+1)));
+  pos.addEventListener('input', ()=> updateActive(parseInt(pos.value)));
+
+  // click on card to focus
+  cardsEl.addEventListener('click', e=>{
+    const card = e.target.closest('.card');
+    if(!card) return;
+    updateActive(parseInt(card.dataset.index));
+  });
+
+  // search filter (simple)
+  search.addEventListener('input', ()=> {
+    const q = search.value.trim().toLowerCase();
+    filtered = data.filter(d => {
+      if(!q) return true;
+      return Object.values(d).join(' ').toLowerCase().includes(q);
+    });
+    renderCards(filtered);
+    updateActive(0);
+  });
+
+  // keyboard arrows
+  window.addEventListener('keydown', e=>{
+    if(e.key==='ArrowLeft') prev.click();
+    if(e.key==='ArrowRight') next.click();
+  });
+
+  // download JSON
+  downloadBtn.addEventListener('click', ()=>{
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'datos-presentacion.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  });
+
+  // initial active
+  if(filtered.length>0) updateActive(0);
+
+  // finally: hide the original table to avoid duplicate visuals (but keep in DOM so it can be re-parsed)
+  table.style.display='none';
+
+})();
+</script>
 </body>
 </html>
