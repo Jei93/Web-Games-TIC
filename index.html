@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gaming Industry Dashboard 2000-2025</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #FF6B6B;
+            --secondary: #4ECDC4;
+            --accent: #FFD166;
+            --dark: #1A1A2E;
+            --light: #F7F7F7;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--dark);
+            color: var(--light);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 30px 0;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+        
+        .filter-group {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+        
+        select, button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            background: var(--accent);
+            color: var(--dark);
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        button:hover {
+            transform: scale(1.05);
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-container {
+            background: rgba(255,255,255,0.05);
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+            position: relative;
+        }
+        
+        .quiz-section {
+            background: rgba(78, 205, 196, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            display: none;
+        }
+        
+        .quiz-section.active {
+            display: block;
+        }
+        
+        .question {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+        }
+        
+        .quiz-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .score {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--primary);
+            padding: 15px 25px;
+            border-radius: 50px;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .quiz-options {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎮 Industria Gaming: AAA vs Indie (2000-2025)</h1>
+            <p>Explora tendencias históricas y pon a prueba tus conocimientos</p>
+        </header>
+        
+        <div class="controls">
+            <div class="filter-group">
+                <label>Año: </label>
+                <select id="yearFilter">
+                    <option value="all">Todos</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Plataforma: </label>
+                <select id="platformFilter">
+                    <option value="all">Todas</option>
+                    <option>PC</option>
+                    <option>Console</option>
+                    <option>Mobile</option>
+                </select>
+            </div>
+            <button onclick="toggleQuiz()">🎯 Modo Quiz</button>
+            <button onclick="exportData()">📊 Exportar Insights</button>
+        </div>
+        
+        <div class="dashboard-grid">
+            <div class="chart-container">
+                <h3>Ingresos Totales (Millones $)</h3>
+                <canvas id="revenueChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3>Juegos Publicados</h3>
+                <canvas id="gamesChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3>Tasa de Éxito por Género</h3>
+                <canvas id="genreChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3>ROI Promedio (%)</h3>
+                <canvas id="roiChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="quiz-section" id="quizSection">
+            <h2>🧠 Quiz de la Industria</h2>
+            <div class="question" id="questionText"></div>
+            <div class="quiz-options" id="quizOptions"></div>
+            <div class="score" id="scoreDisplay">Puntos: 0</div>
+        </div>
+    </div>
+
+    <script>
+        // 📊 DATOS SINTÉTICOS REALISTAS (reemplazar con tu PDF)
+        const gamingData = {
+            years: [2000,2005,2010,2015,2020,2025],
+            aaa: {
+                revenue: [5000, 12000, 25000, 45000, 65000, 80000],
+                games: [50, 80, 120, 150, 180, 200],
+                roi: [150, 200, 300, 250, 180, 220],
+                genres: {
+                    Action: 85, RPG: 75, FPS: 70, Sports: 60
+                }
+            },
+            indie: {
+                revenue: [50, 200, 1500, 8000, 25000, 45000],
+                games: [500, 2000, 8000, 25000, 50000, 75000],
+                roi: [200, 400, 600, 500, 350, 400],
+                genres: {
+                    Puzzle: 65, Platformer: 60, Roguelike: 75, Horror: 80
+                }
+            },
+            platforms: ['PC', 'Console', 'Mobile']
+        };
+        
+        // 🎯 QUIZ DATA
+        const quizQuestions = [
+            {
+                q: "¿En qué año los ingresos indie superaron los $10B por primera vez?",
+                options: ["2012", "2015", "2018", "2020"],
+                correct: 1,
+                fact: "2015 marcó el explosion indie con Steam Greenlight"
+            },
+            {
+                q: "¿Qué género indie tiene mayor tasa de éxito ROI?",
+                options: ["Puzzle", "Horror", "Roguelike", "Platformer"],
+                correct: 2,
+                fact: "Roguelikes tienen ROI 400% por bajo costo y alta replayabilidad"
+            },
+            {
+                q: "¿Cuál fue el factor clave del crecimiento indie 2010-2015?",
+                options: ["Consolas", "Steam", "Mobile", "Kickstarter"],
+                correct: 1,
+                fact: "Steam Greenlight democratizó la distribución digital"
+            }
+        ];
+        
+        //  Inicialización
+        let charts = {};
+        let currentQuiz = 0;
+        let score = 0;
+        
+        window.onload = function() {
+            populateFilters();
+            initCharts();
+            showQuizQuestion();
+        };
+        
+        function populateFilters() {
+            const yearSelect = document.getElementById('yearFilter');
+            gamingData.years.forEach(year => {
+                yearSelect.innerHTML += `<option value="${year}">${year}</option>`;
+            });
+        }
+        
+        function initCharts() {
+            // Gráfico de Ingresos
+            const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+            charts.revenue = new Chart(revenueCtx, {
+                type: 'line',
+                data: {
+                    labels: gamingData.years,
+                    datasets: [{
+                        label: 'AAA (Millones $)',
+                        data: gamingData.aaa.revenue,
+                        borderColor: '#FF6B6B',
+                        backgroundColor: 'rgba(255,107,107,0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'Indie (Millones $)',
+                        data: gamingData.indie.revenue,
+                        borderColor: '#4ECDC4',
+                        backgroundColor: 'rgba(78,205,196,0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#F7F7F7' }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            ticks: { color: '#F7F7F7' },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        },
+                        x: {
+                            ticks: { color: '#F7F7F7' },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        }
+                    }
+                }
+            });
+            
+            // Gráfico de Juegos Publicados
+            const gamesCtx = document.getElementById('gamesChart').getContext('2d');
+            charts.games = new Chart(gamesCtx, {
+                type: 'bar',
+                data: {
+                    labels: gamingData.years,
+                    datasets: [{
+                        label: 'AAA',
+                        data: gamingData.aaa.games,
+                        backgroundColor: '#FF6B6B'
+                    }, {
+                        label: 'Indie',
+                        data: gamingData.indie.games,
+                        backgroundColor: '#4ECDC4'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#F7F7F7' },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        },
+                        x: {
+                            ticks: { color: '#F7F7F7' },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        }
+                    }
+                }
+            });
+            
+            // Géneros
+            const genreCtx = document.getElementById('genreChart').getContext('2d');
+            charts.genre = new Chart(genreCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(gamingData.aaa.genres),
+                    datasets: [{
+                        label: 'AAA',
+                        data: Object.values(gamingData.aaa.genres),
+                        backgroundColor: ['#FF6B6B', '#FF8E53', '#C73E1D', '#A23B72']
+                    }, {
+                        label: 'Indie',
+                        data: Object.values(gamingData.indie.genres),
+                        backgroundColor: ['#4ECDC4', '#44A08D', '#093637', '#2A9D8F']
+                    }]
+                }
+            });
+            
+            // ROI
+            const roiCtx = document.getElementById('roiChart').getContext('2d');
+            charts.roi = new Chart(roiCtx, {
+                type: 'radar',
+                data: {
+                    labels: gamingData.years,
+                    datasets: [{
+                        label: 'AAA ROI %',
+                        data: gamingData.aaa.roi,
+                        borderColor: '#FF6B6B',
+                        backgroundColor: 'rgba(255,107,107,0.2)'
+                    }, {
+                        label: 'Indie ROI %',
+                        data: gamingData.indie.roi,
+                        borderColor: '#4ECDC4',
+                        backgroundColor: 'rgba(78,205,196,0.2)'
+                    }]
+                }
+            });
+        }
+        
+        // 🎯 FUNCIONES QUIZ
+        function toggleQuiz() {
+            const quizSec = document.getElementById('quizSection');
+            quizSec.classList.toggle('active');
+        }
+        
+        function showQuizQuestion() {
+            const q = quizQuestions[currentQuiz];
+            document.getElementById('questionText').textContent = q.q;
+            const optionsDiv = document.getElementById('quizOptions');
+            optionsDiv.innerHTML = '';
+            q.options.forEach((opt, idx) => {
+                optionsDiv.innerHTML += `<button onclick="answerQuiz(${idx})">${opt}</button>`;
+            });
+        }
+        
+        function answerQuiz(selected) {
+            const q = quizQuestions[currentQuiz];
+            if(selected === q.correct) {
+                score += 100;
+                alert(`✅ Correcto! ${q.fact}`);
+            } else {
+                alert(`❌ Incorrecto. La respuesta correcta era: ${q.options[q.correct]}`);
+            }
+            document.getElementById('scoreDisplay').textContent = `Puntos: ${score}`;
+            currentQuiz = (currentQuiz + 1) % quizQuestions.length;
+            setTimeout(showQuizQuestion, 1500);
+        }
+        
+        // 💾 EXPORTAR INSIGHTS
+        function exportData() {
+            const insights = {
+                timestamp: new Date().toISOString(),
+                totalAAARevenue: gamingData.aaa.revenue[gamingData.aaa.revenue.length-1],
+                totalIndieRevenue: gamingData.indie.revenue[gamingData.indie.revenue.length-1],
+                growthIndie: ((gamingData.indie.revenue[5] - gamingData.indie.revenue[0]) / gamingData.indie.revenue[0] * 100).toFixed(2) + '%'
+            };
+            const blob = new Blob([JSON.stringify(insights, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'gaming_insights_2025.json';
+            a.click();
+        }
+        
+        // 🔁 FILTROS
+        document.getElementById('yearFilter').addEventListener('change', function(e) {
+            // Lógica para filtrar datos por año
+            console.log('Filtrar año:', e.target.value);
+        });
+    </script>
+</body>
+</html>
